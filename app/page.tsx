@@ -11,6 +11,7 @@ import { Progress } from "@/components/ui/progress"
 import { Clock, Bell, Smartphone, ArrowRight, X, Heart, Share } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { supabase } from "@/lib/supabase"
 
 // 샘플 뉴스 데이터
 const sampleNews = [
@@ -111,14 +112,17 @@ function StoryViewer({
 // 이메일 수집 모달 컴포넌트
 function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [email, setEmail] = useState("")
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([])
+  const [interests, setInterests] = useState("")
+  const [expectedFeatures, setExpectedFeatures] = useState<string[]>([])
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const topics = ["기술", "경제", "정치", "사회", "문화", "스포츠", "국제", "라이프스타일"]
-
-  const toggleTopic = (topic: string) => {
-    setSelectedTopics((prev) => (prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic]))
+  const handleFeatureChange = (feature: string, checked: boolean) => {
+    if (checked) {
+      setExpectedFeatures((prev) => [...prev, feature])
+    } else {
+      setExpectedFeatures((prev) => prev.filter((f) => f !== feature))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -126,12 +130,66 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     if (!email || !agreedToTerms) return
 
     setIsSubmitting(true)
-    // 여기서 실제 이메일 수집 로직 구현
-    await new Promise((resolve) => setTimeout(resolve, 1000)) // 시뮬레이션
 
-    alert(`알림 신청이 완료되었습니다!\n이메일: ${email}\n관심 토픽: ${selectedTopics.join(", ")}`)
-    setIsSubmitting(false)
-    onClose()
+    try {
+      // Check if Supabase is available
+      if (!supabase) {
+        // Fallback behavior when Supabase is not configured
+        console.log("Supabase not configured. Form data:", {
+          email,
+          interests: interests || null,
+          expected_features: expectedFeatures,
+        })
+
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        alert(
+          `알림 신청이 완료되었습니다! (데모 모드)\n이메일: ${email}\n관심 주제: ${interests}\n기대 기능: ${expectedFeatures.join(", ")}`,
+        )
+
+        onClose()
+        // 폼 초기화
+        setEmail("")
+        setInterests("")
+        setExpectedFeatures([])
+        setAgreedToTerms(false)
+        return
+      }
+
+      // Supabase is available, proceed with database insertion
+      const { data, error } = await supabase.from("email_signups").insert([
+        {
+          email,
+          interests: interests || null,
+          expected_features: expectedFeatures,
+        },
+      ])
+
+      if (error) {
+        if (error.code === "23505") {
+          // 중복 이메일 에러
+          alert("이미 등록된 이메일입니다.")
+        } else {
+          throw error
+        }
+      } else {
+        alert(
+          `알림 신청이 완료되었습니다!\n이메일: ${email}\n관심 주제: ${interests}\n기대 기능: ${expectedFeatures.join(", ")}`,
+        )
+        onClose()
+        // 폼 초기화
+        setEmail("")
+        setInterests("")
+        setExpectedFeatures([])
+        setAgreedToTerms(false)
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      alert("알림 신청 중 오류가 발생했습니다. 다시 시도해주세요.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   if (!isOpen) return null
@@ -169,24 +227,54 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                관심있는 토픽을 선택해주세요 (복수 선택 가능)
+              <label htmlFor="interests" className="block text-sm font-medium text-gray-700 mb-2">
+                관심 주제를 입력해주세요
               </label>
-              <div className="grid grid-cols-2 gap-2">
-                {topics.map((topic) => (
-                  <button
-                    key={topic}
-                    type="button"
-                    onClick={() => toggleTopic(topic)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      selectedTopics.includes(topic)
-                        ? "bg-gradient-to-r from-teal-500 to-cyan-500 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    {topic}
-                  </button>
-                ))}
+              <textarea
+                id="interests"
+                value={interests}
+                onChange={(e) => setInterests(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                placeholder="예: 기술, 경제, 스타트업, AI 등"
+                rows={3}
+              />
+              <p className="text-xs text-gray-500 mt-1">관심있는 주제를 자유롭게 입력해주세요 (선택사항)</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-3">가장 기대되는 기능을 선택해주세요</label>
+              <div className="space-y-3">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="timeline-feature"
+                    checked={expectedFeatures.includes("타임라인 형태의 기사")}
+                    onChange={(e) => handleFeatureChange("타임라인 형태의 기사", e.target.checked)}
+                    className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                  />
+                  <div>
+                    <label htmlFor="timeline-feature" className="text-sm font-medium text-gray-700">
+                      타임라인 형태의 기사
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">인스타그램 스토리처럼 탭으로 넘기며 뉴스를 빠르게 소비</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="followup-feature"
+                    checked={expectedFeatures.includes("후속기사 알림")}
+                    onChange={(e) => handleFeatureChange("후속기사 알림", e.target.checked)}
+                    className="mt-1 w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                  />
+                  <div>
+                    <label htmlFor="followup-feature" className="text-sm font-medium text-gray-700">
+                      후속기사 알림
+                    </label>
+                    <p className="text-xs text-gray-500 mt-1">관심있는 뉴스의 후속 소식을 놓치지 않고 받아보기</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -334,10 +422,6 @@ export default function LandingPage() {
             <Image src="/logo.svg" alt="시점 로고" width={32} height={32} className="w-8 h-8" />
             <span className="font-bold text-xl">시점</span>
           </div>
-
-          <Button className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600">
-            시작하기
-          </Button>
         </div>
       </header>
 
@@ -370,22 +454,22 @@ export default function LandingPage() {
                 <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
                   <Clock className="w-6 h-6 text-teal-600" />
                 </div>
-                <h3 className="font-semibold mb-1">2분 안에</h3>
-                <p className="text-gray-600 text-sm">하루 주요 뉴스 완독</p>
+                <h3 className="font-semibold mb-1">매일 사이트 순회</h3>
+                <p className="text-gray-600 text-sm">여러 뉴스 사이트를 돌아다니며 확인하는 번거로움</p>
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mb-3">
                   <Image src="/logo.svg" alt="시점" width={24} height={24} className="w-6 h-6" />
                 </div>
-                <h3 className="font-semibold mb-1">스토리 형태</h3>
-                <p className="text-gray-600 text-sm">탭 한 번으로 다음 뉴스</p>
+                <h3 className="font-semibold mb-1">후속 기사 갈증</h3>
+                <p className="text-gray-600 text-sm">관심 있는 뉴스의 후속 소식을 빠르게 받고 싶었던 경험</p>
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
                   <Bell className="w-6 h-6 text-emerald-600" />
                 </div>
-                <h3 className="font-semibold mb-1">스마트 알림</h3>
-                <p className="text-gray-600 text-sm">후속 기사 자동 알림</p>
+                <h3 className="font-semibold mb-1">뒤늦은 발견</h3>
+                <p className="text-gray-600 text-sm">까먹고 있다가 후속 기사가 논란이 된 후에야 뒤늦게 찾아봄</p>
               </div>
             </div>
           </div>
