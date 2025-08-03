@@ -36,6 +36,70 @@ export type Database = {
           created_at?: string
         }
       }
+      service_ratings: {
+        Row: {
+          id: string
+          rating_type: string
+          feedback: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          rating_type: string
+          feedback?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          rating_type?: string
+          feedback?: string | null
+          created_at?: string
+        }
+      }
+      news_articles: {
+        Row: {
+          id: string
+          title: string
+          summary: string
+          category: string
+          read_time: string
+          image_url: string | null
+          source: string
+          published_at: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          summary: string
+          category: string
+          read_time: string
+          image_url?: string | null
+          source: string
+          published_at: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          summary?: string
+          category?: string
+          read_time?: string
+          image_url?: string | null
+          source?: string
+          published_at?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }
+
+// 뉴스 타입 정의
+export type NewsArticle = Database["public"]["Tables"]["news_articles"]["Row"]

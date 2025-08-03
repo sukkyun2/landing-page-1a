@@ -2,40 +2,18 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
-import { Clock, Bell, Smartphone, ArrowRight, X, Heart, Share } from "lucide-react"
+import { Clock, Bell, Smartphone, ArrowRight, X, Heart, Share, Star } from "lucide-react"
 import Image from "next/image"
-import Link from "next/link"
 import { supabase } from "@/lib/supabase"
+import { getNewsArticles, type NewsArticle } from "@/lib/news"
 
-// 샘플 뉴스 데이터
-const sampleNews = [
-  {
-    id: 1,
-    title: "삼성전자, AI 반도체 시장 점유율 1위 달성",
-    summary: "삼성전자가 글로벌 AI 반도체 시장에서 점유율 1위를 기록했다고 발표했습니다.",
-    category: "기술",
-    readTime: "2분",
-    image: "/placeholder.svg?height=400&width=400",
-    source: "테크뉴스",
-    publishedAt: "1시간 전",
-  },
-  {
-    id: 2,
-    title: "국내 스타트업, 해외 투자 유치 급증",
-    summary: "올해 국내 스타트업들의 해외 투자 유치 규모가 전년 대비 150% 증가했습니다.",
-    category: "경제",
-    readTime: "3분",
-    image: "/placeholder.svg?height=400&width=400",
-    source: "비즈니스타임즈",
-    publishedAt: "2시간 전",
-  },
-]
+// 뉴스 데이터는 이제 동적으로 로드됩니다
 
 // 스토리 뷰어 컴포넌트
 function StoryViewer({
@@ -45,7 +23,7 @@ function StoryViewer({
   onNext,
   onPrev,
 }: {
-  news: typeof sampleNews
+  news: NewsArticle[]
   currentIndex: number
   onClose: () => void
   onNext: () => void
@@ -81,7 +59,12 @@ function StoryViewer({
 
         {/* 메인 콘텐츠 */}
         <div className="relative w-full h-full cursor-pointer" onClick={handleTap}>
-          <Image src={currentNews.image || "/placeholder.svg"} alt={currentNews.title} fill className="object-cover" />
+          <Image
+            src={currentNews.image_url || "/placeholder.svg"}
+            alt={currentNews.title}
+            fill
+            className="object-cover"
+          />
 
           {/* 그라데이션 오버레이 */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
@@ -95,7 +78,7 @@ function StoryViewer({
             <p className="text-gray-200 text-sm mb-4 leading-relaxed">{currentNews.summary}</p>
             <div className="flex items-center justify-between text-xs text-gray-300">
               <span>{currentNews.source}</span>
-              <span>{currentNews.readTime} 읽기</span>
+              <span>{currentNews.read_time} 읽기</span>
             </div>
           </div>
         </div>
@@ -317,6 +300,23 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
 // 뉴스 피드 컴포넌트
 function NewsFeed() {
   const [selectedNewsIndex, setSelectedNewsIndex] = useState<number | null>(null)
+  const [newsData, setNewsData] = useState<NewsArticle[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const loadNews = async () => {
+      try {
+        const articles = await getNewsArticles()
+        setNewsData(articles)
+      } catch (error) {
+        console.error("Failed to load news:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadNews()
+  }, [])
 
   const openStory = (index: number) => {
     setSelectedNewsIndex(index)
@@ -328,20 +328,31 @@ function NewsFeed() {
 
   const nextStory = () => {
     if (selectedNewsIndex !== null) {
-      setSelectedNewsIndex((selectedNewsIndex + 1) % sampleNews.length)
+      setSelectedNewsIndex((selectedNewsIndex + 1) % newsData.length)
     }
   }
 
   const prevStory = () => {
     if (selectedNewsIndex !== null) {
-      setSelectedNewsIndex(selectedNewsIndex === 0 ? sampleNews.length - 1 : selectedNewsIndex - 1)
+      setSelectedNewsIndex(selectedNewsIndex === 0 ? newsData.length - 1 : selectedNewsIndex - 1)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-[600px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
+          <p className="text-gray-500 text-sm">뉴스를 불러오는 중...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="w-full h-[600px] overflow-y-auto scrollbar-hide">
       <div className="space-y-3">
-        {sampleNews.map((news, index) => (
+        {newsData.map((news, index) => (
           <Card
             key={news.id}
             className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow flex-shrink-0"
@@ -353,7 +364,7 @@ function NewsFeed() {
               </Avatar>
               <div className="flex-1">
                 <p className="font-semibold text-sm">{news.source}</p>
-                <p className="text-xs text-gray-500">{news.publishedAt}</p>
+                <p className="text-xs text-gray-500">{news.published_at}</p>
               </div>
               <Badge variant="outline" className="text-xs">
                 {news.category}
@@ -362,7 +373,7 @@ function NewsFeed() {
 
             <div className="relative">
               <Image
-                src={news.image || "/placeholder.svg"}
+                src={news.image_url || "/placeholder.svg"}
                 alt={news.title}
                 width={400}
                 height={200}
@@ -389,7 +400,7 @@ function NewsFeed() {
                     <span className="text-xs">공유</span>
                   </button>
                 </div>
-                <span className="text-xs text-gray-400">{news.readTime}</span>
+                <span className="text-xs text-gray-400">{news.read_time}</span>
               </div>
             </CardContent>
           </Card>
@@ -397,9 +408,9 @@ function NewsFeed() {
       </div>
 
       {/* 스토리 뷰어 */}
-      {selectedNewsIndex !== null && (
+      {selectedNewsIndex !== null && newsData.length > 0 && (
         <StoryViewer
-          news={sampleNews}
+          news={newsData}
           currentIndex={selectedNewsIndex}
           onClose={closeStory}
           onNext={nextStory}
@@ -410,8 +421,218 @@ function NewsFeed() {
   )
 }
 
+// 별점 평가 모달 컴포넌트
+function ServiceRatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [selectedOption, setSelectedOption] = useState<string>("")
+  const [feedback, setFeedback] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [hasSubmitted, setHasSubmitted] = useState(false)
+
+  const options = [
+    { value: "want_to_use", label: "써보고 싶어요", emoji: "😍" },
+    { value: "dont_want_to_use", label: "안쓰고 싶어요", emoji: "😕" },
+    { value: "not_sure", label: "잘 모르겠어요", emoji: "🤔" },
+  ]
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedOption) return
+
+    setIsSubmitting(true)
+
+    try {
+      // Check if Supabase is available
+      if (!supabase) {
+        // Fallback behavior when Supabase is not configured
+        console.log("Supabase not configured. Form data:", {
+          rating_type: selectedOption,
+          feedback: feedback || null,
+        })
+
+        // Simulate API call delay
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+
+        localStorage.setItem("hasRatedService", "true")
+        setHasSubmitted(true)
+
+        // 3초 후 모달 닫기
+        setTimeout(() => {
+          onClose()
+        }, 3000)
+        return
+      }
+
+      // Supabase is available, proceed with database insertion
+      const { data, error } = await supabase.from("service_ratings").insert([
+        {
+          rating_type: selectedOption,
+          feedback: feedback || null,
+        },
+      ])
+
+      if (error) {
+        throw error
+      } else {
+        localStorage.setItem("hasRatedService", "true")
+        setHasSubmitted(true)
+
+        // 3초 후 모달 닫기
+        setTimeout(() => {
+          onClose()
+        }, 3000)
+      }
+    } catch (error) {
+      console.error("Error:", error)
+      alert("평가 제출 중 오류가 발생했습니다. 다시 시도해주세요.")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const resetForm = () => {
+    setSelectedOption("")
+    setFeedback("")
+    setHasSubmitted(false)
+  }
+
+  const handleClose = () => {
+    resetForm()
+    onClose()
+  }
+
+  if (!isOpen) return null
+
+  if (hasSubmitted) {
+    return (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl max-w-md w-full p-8 text-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Star className="w-8 h-8 text-green-600 fill-current" />
+          </div>
+          <h2 className="text-xl font-bold mb-2">소중한 의견 감사합니다!</h2>
+          <p className="text-gray-600 mb-4">
+            {selectedOption === "want_to_use" && "높은 관심을 보여주셔서 감사합니다. 더 좋은 서비스로 보답하겠습니다!"}
+            {selectedOption === "dont_want_to_use" &&
+              "소중한 피드백 감사합니다. 개선사항을 반영하여 더 나은 서비스를 제공하겠습니다."}
+            {selectedOption === "not_sure" && "의견을 참고하여 더 나은 서비스를 만들어가겠습니다."}
+          </p>
+          <div className="text-sm text-gray-500">잠시 후 자동으로 닫힙니다...</div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-2">
+              <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <Star className="w-5 h-5 text-white" />
+              </div>
+              <h2 className="text-xl font-bold">서비스 평가하기</h2>
+            </div>
+            <button onClick={handleClose} className="text-gray-400 hover:text-gray-600">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-4 text-center">저희 서비스에 대해서 어떻게 생각하세요?</h3>
+
+              <div className="space-y-3">
+                {options.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50 ${
+                      selectedOption === option.value ? "border-teal-500 bg-teal-50" : "border-gray-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="rating"
+                      value={option.value}
+                      checked={selectedOption === option.value}
+                      onChange={(e) => setSelectedOption(e.target.value)}
+                      className="sr-only"
+                    />
+                    <span className="text-2xl mr-3">{option.emoji}</span>
+                    <span className="font-medium text-gray-800">{option.label}</span>
+                    {selectedOption === option.value && (
+                      <div className="ml-auto w-5 h-5 bg-teal-500 rounded-full flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full"></div>
+                      </div>
+                    )}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {(selectedOption === "dont_want_to_use" || selectedOption === "not_sure") && (
+              <div className="animate-in slide-in-from-top-2 duration-300">
+                <label htmlFor="feedback" className="block text-sm font-medium text-gray-700 mb-2">
+                  피드백을 남겨주세요!
+                </label>
+                <textarea
+                  id="feedback"
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
+                  placeholder={
+                    selectedOption === "dont_want_to_use"
+                      ? "어떤 부분이 아쉬우신가요? 개선했으면 하는 점을 알려주세요."
+                      : "어떤 부분이 궁금하거나 확신이 서지 않으시나요?"
+                  }
+                  rows={4}
+                />
+              </div>
+            )}
+
+            <div className="flex space-x-3">
+              <Button type="button" variant="outline" onClick={handleClose} className="flex-1 bg-transparent">
+                나중에 하기
+              </Button>
+              <Button
+                type="submit"
+                disabled={!selectedOption || isSubmitting}
+                className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 disabled:opacity-50"
+              >
+                {isSubmitting ? "제출 중..." : "평가 완료"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function LandingPage() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
+  const [isRatingModalOpen, setIsRatingModalOpen] = useState(false)
+  const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+      const scrollHeight = document.documentElement.scrollHeight
+      const clientHeight = document.documentElement.clientHeight
+      const scrollPercentage = (scrollTop / (scrollHeight - clientHeight)) * 100
+
+      if (scrollPercentage >= 90 && !hasScrolledToBottom) {
+        const hasRated = localStorage.getItem("hasRatedService")
+        if (!hasRated) {
+          setIsRatingModalOpen(true)
+          setHasScrolledToBottom(true)
+        }
+      }
+    }
+
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [hasScrolledToBottom])
 
   return (
     <div className="min-h-screen bg-white">
@@ -573,89 +794,12 @@ export default function LandingPage() {
       </section>
 
       {/* 푸터 */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Image src="/logo.svg" alt="시점 로고" width={32} height={32} className="w-8 h-8" />
-                <span className="font-bold text-xl">시점</span>
-              </div>
-              <p className="text-gray-400">직장인을 위한 스마트 뉴스 요약 서비스</p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">서비스</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    뉴스 피드
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    알림 설정
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    카테고리
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">회사</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    소개
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    채용
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    블로그
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">지원</h4>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    고객센터
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    이용약관
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-white">
-                    개인정보처리방침
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            &copy; 2024 시점. All rights reserved.
-          </div>
-        </div>
-      </footer>
 
       {/* 이메일 모달 추가 */}
       <EmailModal isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} />
+
+      {/* 별점 평가 모달 */}
+      <ServiceRatingModal isOpen={isRatingModalOpen} onClose={() => setIsRatingModalOpen(false)} />
     </div>
   )
 }
