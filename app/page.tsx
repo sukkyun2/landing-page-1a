@@ -659,7 +659,7 @@ export default function LandingPage() {
       <section className="py-20 bg-gradient-to-br from-teal-50 to-cyan-50">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent md:text-4xl">
               뉴스 읽을 시간이 부족하다면?
             </h1>
             <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-gray-800">시점으로 해결하세요</h2>
