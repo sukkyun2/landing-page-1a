@@ -19,6 +19,8 @@ export type Database = {
           email: string
           interests: string | null
           expected_features: string[]
+          ip_address: string | null
+          referrer_source: string | null
           created_at: string
         }
         Insert: {
@@ -26,6 +28,8 @@ export type Database = {
           email: string
           interests?: string | null
           expected_features: string[]
+          ip_address?: string | null
+          referrer_source?: string | null
           created_at?: string
         }
         Update: {
@@ -33,6 +37,8 @@ export type Database = {
           email?: string
           interests?: string | null
           expected_features?: string[]
+          ip_address?: string | null
+          referrer_source?: string | null
           created_at?: string
         }
       }

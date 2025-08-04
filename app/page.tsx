@@ -8,10 +8,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
-import { Clock, Bell, Smartphone, ArrowRight, X, Heart, Share, Star } from "lucide-react"
+import { Clock, Bell, Smartphone, ArrowRight, X, Heart, Star } from "lucide-react"
 import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 import { getNewsArticles, type NewsArticle } from "@/lib/news"
+import { getClientInfo, type ClientInfo } from "@/lib/client-info"
 
 // 뉴스 데이터는 이제 동적으로 로드됩니다
 
@@ -99,6 +100,14 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
   const [expectedFeatures, setExpectedFeatures] = useState<string[]>([])
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null)
+
+  // 모달이 열릴 때 클라이언트 정보 수집
+  useEffect(() => {
+    if (isOpen && !clientInfo) {
+      getClientInfo().then(setClientInfo)
+    }
+  }, [isOpen, clientInfo])
 
   const handleFeatureChange = (feature: string, checked: boolean) => {
     if (checked) {
@@ -122,6 +131,8 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           email,
           interests: interests || null,
           expected_features: expectedFeatures,
+          ip_address: clientInfo?.ip_address || null,
+          referrer_source: clientInfo?.referrer_source || null,
         })
 
         // Simulate API call delay
@@ -146,6 +157,8 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           email,
           interests: interests || null,
           expected_features: expectedFeatures,
+          ip_address: clientInfo?.ip_address || null,
+          referrer_source: clientInfo?.referrer_source || null,
         },
       ])
 
@@ -394,10 +407,6 @@ function NewsFeed() {
                   <button className="flex items-center space-x-1 text-gray-500 hover:text-teal-500">
                     <Bell className="w-4 h-4" />
                     <span className="text-xs">알림</span>
-                  </button>
-                  <button className="flex items-center space-x-1 text-gray-500 hover:text-green-500">
-                    <Share className="w-4 h-4" />
-                    <span className="text-xs">공유</span>
                   </button>
                 </div>
                 <span className="text-xs text-gray-400">{news.read_time}</span>
@@ -651,13 +660,13 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
-              직장인이 뉴스를 소비할 시간이 없죠?
+              뉴스 읽을 시간이 부족하다면?
             </h1>
-            <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-gray-800">우리가 해결해드립니다</h2>
+            <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-gray-800">시점으로 해결하세요</h2>
             <p className="text-xl text-gray-600 mb-8">
-              인스타그램처럼 쉽고 빠르게 뉴스를 소비하세요.
+              인스타그램처럼 빠르게 관심있는 뉴스만 소비하세요.
               <br />
-              <span className="font-semibold text-teal-600">후속기사 알림도 할 수 있어요!</span>
+              {/*<span className="font-semibold text-teal-600">후속기사 알림도 할 수 있어요!</span>*/}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -675,22 +684,26 @@ export default function LandingPage() {
                 <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
                   <Clock className="w-6 h-6 text-teal-600" />
                 </div>
-                <h3 className="font-semibold mb-1">매일 사이트 순회</h3>
-                <p className="text-gray-600 text-sm">여러 뉴스 사이트를 돌아다니며 확인하는 번거로움</p>
+                <h3 className="font-semibold mb-1">이게 무슨 이야기지?</h3>
+                <p className="text-gray-600 text-sm">어떤 기사를 봤는데, 무슨 논란인지 감이 안 왔던 적 있나요?</p>
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mb-3">
                   <Image src="/logo.svg" alt="시점" width={24} height={24} className="w-6 h-6" />
                 </div>
-                <h3 className="font-semibold mb-1">후속 기사 갈증</h3>
-                <p className="text-gray-600 text-sm">관심 있는 뉴스의 후속 소식을 빠르게 받고 싶었던 경험</p>
+                <h3 className="font-semibold mb-1">관심 없는 기사</h3>
+                <p className="text-gray-600 text-sm">
+                  기사 수는 너무 많은데, 정작 내가 기다리던 이슈는 놓친 경험있나요?
+                </p>
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
                   <Bell className="w-6 h-6 text-emerald-600" />
                 </div>
                 <h3 className="font-semibold mb-1">뒤늦은 발견</h3>
-                <p className="text-gray-600 text-sm">까먹고 있다가 후속 기사가 논란이 된 후에야 뒤늦게 찾아봄</p>
+                <p className="text-gray-600 text-sm">
+                  까먹고 있다가, 이미 커진 논란이 된 후에야 뒤늦게 기사를 찾아본 적 있나요?
+                </p>
               </div>
             </div>
           </div>
@@ -749,15 +762,15 @@ export default function LandingPage() {
               <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
                 <Image src="/logo.svg" alt="시점" width={24} height={24} className="w-6 h-6" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">빠른 소비</h3>
-              <p className="text-gray-600">핵심만 요약된 뉴스로 2-3분 안에 하루 이슈를 파악하세요.</p>
+              <h3 className="font-semibold text-lg mb-2">토픽 타임라인</h3>
+              <p className="text-gray-600">최근 떠오른 이슈가 왜 나왔는지 시간순으로 설명해드려요.</p>
             </Card>
 
             <Card className="p-6 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
                 <Bell className="w-6 h-6 text-emerald-600" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">후속 알림</h3>
+              <h3 className="font-semibold text-lg mb-2">후속 기사 알림</h3>
               <p className="text-gray-600">관심 있는 뉴스의 후속 기사가 나오면 자동으로 알려드려요.</p>
             </Card>
           </div>
