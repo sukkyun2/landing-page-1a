@@ -103,6 +103,73 @@ export type Database = {
           updated_at?: string
         }
       }
+      user_interactions: {
+        Row: {
+          id: string
+          session_id: string
+          ip_address: string | null
+          referrer_source: string | null
+          user_agent: string | null
+          interaction_type: string
+          time_on_site: number | null
+          page_url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          ip_address?: string | null
+          referrer_source?: string | null
+          user_agent?: string | null
+          interaction_type: string
+          time_on_site?: number | null
+          page_url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          ip_address?: string | null
+          referrer_source?: string | null
+          user_agent?: string | null
+          interaction_type?: string
+          time_on_site?: number | null
+          page_url?: string | null
+          created_at?: string
+        }
+      }
+      hero_content: {
+        Row: {
+          id: string
+          variant_key: string
+          main_title: string
+          sub_title: string
+          description: string
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          variant_key: string
+          main_title: string
+          sub_title: string
+          description: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          variant_key?: string
+          main_title?: string
+          sub_title?: string
+          description?: string
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }

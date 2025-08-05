@@ -14,6 +14,10 @@ import { supabase } from "@/lib/supabase"
 import { getNewsArticles, type NewsArticle } from "@/lib/news"
 import { getClientInfo, type ClientInfo } from "@/lib/client-info"
 
+// 필요한 import 추가
+import { getHeroContent, type HeroContent } from "@/lib/hero-content"
+import { trackUserInteraction, setupExitTracking } from "@/lib/user-tracking"
+
 // 뉴스 데이터는 이제 동적으로 로드됩니다
 
 // 스토리 뷰어 컴포넌트
@@ -618,11 +622,33 @@ function ServiceRatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   )
 }
 
+// LandingPage 컴포넌트 수정
 export default function LandingPage() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false)
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
+  const [heroContent, setHeroContent] = useState<HeroContent | null>(null)
+  const [hasTrackedDemo, setHasTrackedDemo] = useState(false)
 
+  // 히어로 콘텐츠 로드
+  useEffect(() => {
+    const loadHeroContent = async () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const variantKey = urlParams.get("x")
+      const content = await getHeroContent(variantKey || undefined)
+      setHeroContent(content)
+    }
+
+    loadHeroContent()
+  }, [])
+
+  // 페이지 나갈 때 추적 설정
+  useEffect(() => {
+    const cleanup = setupExitTracking()
+    return cleanup
+  }, [])
+
+  // 스크롤 이벤트 처리
   useEffect(() => {
     const handleScroll = () => {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop
@@ -630,6 +656,17 @@ export default function LandingPage() {
       const clientHeight = document.documentElement.clientHeight
       const scrollPercentage = (scrollTop / (scrollHeight - clientHeight)) * 100
 
+      // 데모 섹션 추적 (한 번만)
+      const demoSection = document.getElementById("demo")
+      if (demoSection && !hasTrackedDemo) {
+        const rect = demoSection.getBoundingClientRect()
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          trackUserInteraction("demo_scroll")
+          setHasTrackedDemo(true)
+        }
+      }
+
+      // 페이지 하단 도달시 평가 모달
       if (scrollPercentage >= 90 && !hasScrolledToBottom) {
         const hasRated = localStorage.getItem("hasRatedService")
         if (!hasRated) {
@@ -641,32 +678,33 @@ export default function LandingPage() {
 
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
-  }, [hasScrolledToBottom])
+  }, [hasScrolledToBottom, hasTrackedDemo])
+
+  // 데모 섹션 클릭 추적
+  const handleDemoClick = () => {
+    if (!hasTrackedDemo) {
+      trackUserInteraction("demo_click")
+      setHasTrackedDemo(true)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-white">
-      {/* 헤더 */}
-      <header className="border-b bg-white/95 backdrop-blur-sm sticky top-0 z-40">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Image src="/logo.svg" alt="시점 로고" width={32} height={32} className="w-8 h-8" />
-            <span className="font-bold text-xl">시점</span>
-          </div>
-        </div>
-      </header>
+      {/* 네비게이션바 제거됨 */}
 
       {/* 히어로 섹션 */}
       <section className="py-20 bg-gradient-to-br from-teal-50 to-cyan-50">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent md:text-4xl">
-              뉴스 읽을 시간이 부족하다면?
+              {heroContent?.main_title || "뉴스 읽을 시간이 부족하다면?"}
             </h1>
-            <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-gray-800">시점으로 해결하세요</h2>
+            <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-gray-800">
+              {heroContent?.sub_title || "시점으로 해결하세요"}
+            </h2>
             <p className="text-xl text-gray-600 mb-8">
-              인스타그램처럼 빠르게 관심있는 뉴스만 소비하세요.
+              {heroContent?.description || "인스타그램처럼 빠르게 관심있는 뉴스만 소비하세요."}
               <br />
-              {/*<span className="font-semibold text-teal-600">후속기사 알림도 할 수 있어요!</span>*/}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
@@ -710,8 +748,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 데모 섹션 */}
-      <section id="demo" className="py-20 bg-gray-50">
+      {/* 데모 섹션 - 클릭 추적 추가 */}
+      <section id="demo" className="py-20 bg-gray-50" onClick={handleDemoClick}>
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">직접 체험해보세요</h2>
@@ -741,6 +779,7 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 나머지 섹션들은 동일 */}
       {/* 기능 섹션 */}
       <section id="features" className="py-20">
         <div className="container mx-auto px-4">
@@ -805,8 +844,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* 푸터 */}
 
       {/* 이메일 모달 추가 */}
       <EmailModal isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} />
