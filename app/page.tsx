@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
-import { Clock, Bell, Smartphone, ArrowRight, X, Heart, Star } from "lucide-react"
+import { Clock, Bell, Smartphone, ArrowRight, X, Heart, Star } from 'lucide-react'
 import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 import { getNewsArticles, type NewsArticle } from "@/lib/news"
@@ -17,25 +17,26 @@ import { getClientInfo, type ClientInfo } from "@/lib/client-info"
 // 필요한 import 추가
 import { getHeroContent, type HeroContent } from "@/lib/hero-content"
 import { trackUserInteraction, setupExitTracking } from "@/lib/user-tracking"
+import { getStoryContent, type StoryContent } from "@/lib/story-content"
 
 // 뉴스 데이터는 이제 동적으로 로드됩니다
 
 // 스토리 뷰어 컴포넌트
 function StoryViewer({
-  news,
+  stories,
   currentIndex,
   onClose,
   onNext,
   onPrev,
 }: {
-  news: NewsArticle[]
+  stories: StoryContent[]
   currentIndex: number
   onClose: () => void
   onNext: () => void
   onPrev: () => void
 }) {
-  const currentNews = news[currentIndex]
-  const progress = ((currentIndex + 1) / news.length) * 100
+  const currentStory = stories[currentIndex]
+  const progress = ((currentIndex + 1) / stories.length) * 100
 
   const handleTap = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -51,10 +52,10 @@ function StoryViewer({
 
   return (
     <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
-      <div className="relative w-full max-w-md h-full bg-black">
+      <div className="relative w-full max-w-md h-full" style={{ backgroundColor: currentStory.background_color }}>
         {/* 진행 바 */}
         <div className="absolute top-4 left-4 right-4 z-10">
-          <Progress value={progress} className="h-1 bg-gray-600" />
+          <Progress value={progress} className="h-1 bg-white/30" />
         </div>
 
         {/* 닫기 버튼 */}
@@ -65,8 +66,8 @@ function StoryViewer({
         {/* 메인 콘텐츠 */}
         <div className="relative w-full h-full cursor-pointer" onClick={handleTap}>
           <Image
-            src={currentNews.image_url || "/placeholder.svg"}
-            alt={currentNews.title}
+            src={currentStory.image_url || "/placeholder.svg"}
+            alt={currentStory.title}
             fill
             className="object-cover"
           />
@@ -75,22 +76,21 @@ function StoryViewer({
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
 
           {/* 텍스트 콘텐츠 */}
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <Badge variant="secondary" className="mb-2">
-              {currentNews.category}
+          <div className="absolute bottom-0 left-0 right-0 p-6" style={{ color: currentStory.text_color }}>
+            <Badge variant="secondary" className="mb-3">
+              {currentStory.category}
             </Badge>
-            <h2 className="text-xl font-bold mb-2 leading-tight">{currentNews.title}</h2>
-            <p className="text-gray-200 text-sm mb-4 leading-relaxed">{currentNews.summary}</p>
-            <div className="flex items-center justify-between text-xs text-gray-300">
-              <span>{currentNews.source}</span>
-              <span>{currentNews.read_time} 읽기</span>
-            </div>
+            <h2 className="text-2xl font-bold mb-2 leading-tight">{currentStory.title}</h2>
+            {currentStory.subtitle && (
+              <h3 className="text-lg font-medium mb-3 opacity-90">{currentStory.subtitle}</h3>
+            )}
+            <p className="text-sm mb-4 leading-relaxed opacity-90">{currentStory.content}</p>
           </div>
         </div>
 
         {/* 네비게이션 힌트 */}
         <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-white/60 text-xs">
-          탭하여 다음 기사 보기
+          탭하여 다음 스토리 보기
         </div>
       </div>
     </div>
@@ -316,42 +316,47 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
 
 // 뉴스 피드 컴포넌트
 function NewsFeed() {
-  const [selectedNewsIndex, setSelectedNewsIndex] = useState<number | null>(null)
+  const [selectedStoryIndex, setSelectedStoryIndex] = useState<number | null>(null)
   const [newsData, setNewsData] = useState<NewsArticle[]>([])
+  const [storyData, setStoryData] = useState<StoryContent[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const loadNews = async () => {
+    const loadData = async () => {
       try {
-        const articles = await getNewsArticles()
+        const [articles, stories] = await Promise.all([
+          getNewsArticles(),
+          getStoryContent()
+        ])
         setNewsData(articles)
+        setStoryData(stories)
       } catch (error) {
-        console.error("Failed to load news:", error)
+        console.error("Failed to load data:", error)
       } finally {
         setIsLoading(false)
       }
     }
 
-    loadNews()
+    loadData()
   }, [])
 
   const openStory = (index: number) => {
-    setSelectedNewsIndex(index)
+    setSelectedStoryIndex(index)
   }
 
   const closeStory = () => {
-    setSelectedNewsIndex(null)
+    setSelectedStoryIndex(null)
   }
 
   const nextStory = () => {
-    if (selectedNewsIndex !== null) {
-      setSelectedNewsIndex((selectedNewsIndex + 1) % newsData.length)
+    if (selectedStoryIndex !== null) {
+      setSelectedStoryIndex((selectedStoryIndex + 1) % storyData.length)
     }
   }
 
   const prevStory = () => {
-    if (selectedNewsIndex !== null) {
-      setSelectedNewsIndex(selectedNewsIndex === 0 ? newsData.length - 1 : selectedNewsIndex - 1)
+    if (selectedStoryIndex !== null) {
+      setSelectedStoryIndex(selectedStoryIndex === 0 ? storyData.length - 1 : selectedStoryIndex - 1)
     }
   }
 
@@ -368,6 +373,7 @@ function NewsFeed() {
 
   return (
     <div className="w-full h-[600px] overflow-y-auto scrollbar-hide">
+      {/* 기존 뉴스 카드들 */}
       <div className="space-y-3">
         {newsData.map((news, index) => (
           <Card
@@ -420,11 +426,11 @@ function NewsFeed() {
         ))}
       </div>
 
-      {/* 스토리 뷰어 */}
-      {selectedNewsIndex !== null && newsData.length > 0 && (
+      {/* 스토리 뷰어 - 이제 별도의 스토리 데이터 사용 */}
+      {selectedStoryIndex !== null && storyData.length > 0 && (
         <StoryViewer
-          news={newsData}
-          currentIndex={selectedNewsIndex}
+          stories={storyData}
+          currentIndex={selectedStoryIndex}
           onClose={closeStory}
           onNext={nextStory}
           onPrev={prevStory}
@@ -763,10 +769,6 @@ export default function LandingPage() {
                   <div className="w-16 h-1 bg-gray-600 rounded-full"></div>
                 </div>
                 <div className="p-4 h-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold">오늘의 뉴스</h3>
-                    <Badge variant="secondary">실시간</Badge>
-                  </div>
                   <NewsFeed />
                 </div>
               </div>

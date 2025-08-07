@@ -170,6 +170,50 @@ export type Database = {
           updated_at?: string
         }
       }
+      story_content: {
+        Row: {
+          id: string
+          title: string
+          subtitle: string | null
+          content: string
+          category: string
+          image_url: string
+          background_color: string
+          text_color: string
+          display_order: number
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          subtitle?: string | null
+          content: string
+          category: string
+          image_url: string
+          background_color?: string
+          text_color?: string
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          subtitle?: string | null
+          content?: string
+          category?: string
+          image_url?: string
+          background_color?: string
+          text_color?: string
+          display_order?: number
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }
