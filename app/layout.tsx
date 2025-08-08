@@ -6,7 +6,7 @@ import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import Script from 'next/script'
 
-export const meta Metadata = {
+export const metadata: Metadata = {
   title: '시점',
   description: '시점: 세상을 보는 가장 빠른 시점',
   generator: 'RedStone',
