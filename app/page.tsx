@@ -692,7 +692,7 @@ const handleDemoClick = () => {
 return (
   <div className="min-h-screen bg-white">
     {/* 히어로 섹션 */}
-    <HeroSection videoSrc={"hero.mp4"} />
+    <HeroSection videoSrc={"hero.mp4"} onNotifyClick={() => setIsEmailModalOpen(true)}/>
 
     {/* 기능 섹션 */}
     <FeaturesSection />
