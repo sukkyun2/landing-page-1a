@@ -34,6 +34,15 @@ onPrev: () => void
 const currentStory = stories[currentIndex]
 const progress = ((currentIndex + 1) / stories.length) * 100
 
+const fireStoryPixel = (dir: 'prev'|'next') => {
+  if (typeof window !== "undefined" && typeof window.fbq === "function") {
+    window.fbq('trackCustom', `tab_${dir}_${currentIndex}`, {
+      content_type: 'story',
+      dir
+    })
+  }
+}
+
 const handleTap = (e: React.MouseEvent) => {
   const rect = e.currentTarget.getBoundingClientRect()
   const x = e.clientX - rect.left
@@ -41,8 +50,13 @@ const handleTap = (e: React.MouseEvent) => {
 
   if (x < width / 2) {
     onPrev()
+    // 이전 스토리 픽셀 이벤트는 useEffect에서 자동 호출됨
+    fireStoryPixel('prev')
   } else {
     onNext()
+    // 다음 스토리 픽셀 이벤트는 useEffect에서 자동 호출됨
+    fireStoryPixel('next')
+    console.log('next')
   }
 }
 
@@ -134,8 +148,19 @@ const handleSubmit = async (e: React.FormEvent) => {
 
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
+      // 픽셀 이벤트 호출 (데모 모드)
+      if (typeof window !== "undefined" && typeof window.fbq === "function") {
+        window.fbq('track', 'Lead',{
+          email,
+          interests: interests || null,
+          expected_features: expectedFeatures,
+          ip_address: clientInfo?.ip_address || null,
+          referrer_source: clientInfo?.referrer_source || null,
+        })
+      }
+
       alert(
-        `알림 신청이 완료되었습니다! (데모 모드)\n이메일: ${email}\n관심 주제: ${interests}\n기대 기능: ${expectedFeatures.join(", ")}`,
+        `알림 신청이 완료되었습니다!`
       )
 
       onClose()
@@ -163,6 +188,11 @@ const handleSubmit = async (e: React.FormEvent) => {
         throw error
       }
     } else {
+      // 픽셀 이벤트 호출 (실제 제출 성공)
+      if (typeof window !== "undefined" && typeof window.fbq === "function") {
+        window.fbq('track', 'Lead')
+      }
+
       alert(
         `알림 신청이 완료되었습니다!\n이메일: ${email}\n관심 주제: ${interests}\n기대 기능: ${expectedFeatures.join(", ")}`,
       )
@@ -304,110 +334,121 @@ return (
 
 // 뉴스 피드 컴포넌트
 function NewsFeed() {
-const [selectedStoryIndex, setSelectedStoryIndex] = useState<number | null>(null)
-const [newsData, setNewsData] = useState<NewsArticle[]>([])
-const [storyData, setStoryData] = useState<StoryContent[]>([])
-const [isLoading, setIsLoading] = useState(true)
+  const [selectedStoryIndex, setSelectedStoryIndex] = useState<number | null>(null)
+  const [newsData, setNewsData] = useState<NewsArticle[]>([])
+  const [storyData, setStoryData] = useState<StoryContent[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-useEffect(() => {
-  const loadData = async () => {
-    try {
-      const [articles, stories] = await Promise.all([getNewsArticles(), getStoryContent()])
-      setNewsData(articles)
-      setStoryData(stories)
-    } catch (error) {
-      console.error("Failed to load data:", error)
-    } finally {
-      setIsLoading(false)
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [articles, stories] = await Promise.all([getNewsArticles(), getStoryContent()])
+        setNewsData(articles)
+        setStoryData(stories)
+      } catch (error) {
+        console.error("Failed to load data:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
+
+    loadData()
+  }, [])
+
+  // 뉴스 카드 클릭 시 픽셀 이벤트 호출 추가
+  const openStory = (index: number) => {
+    // 픽셀 이벤트 호출
+    if (typeof window !== "undefined" && typeof window.fbq === "function") {
+      window.fbq('track', 'ViewContent', {
+        content_type: 'feed',
+        content_id: newsData[index]?.id,
+        title: newsData[index]?.title,
+      })
+    }
+    setSelectedStoryIndex(index)
+  }
+  const closeStory = () => setSelectedStoryIndex(null)
+  const nextStory = () => setSelectedStoryIndex((i) => (i === null ? null : (i + 1) % storyData.length))
+  const prevStory = () =>
+    setSelectedStoryIndex((i) => (i === null ? null : i === 0 ? storyData.length - 1 : i - 1))
+
+  if (isLoading) {
+    return (
+      <div className="w-full h-[600px] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
+          <p className="text-gray-500 text-sm">뉴스를 불러오는 중...</p>
+        </div>
+      </div>
+    )
   }
 
-  loadData()
-}, [])
-
-const openStory = (index: number) => setSelectedStoryIndex(index)
-const closeStory = () => setSelectedStoryIndex(null)
-const nextStory = () => setSelectedStoryIndex((i) => (i === null ? null : (i + 1) % storyData.length))
-const prevStory = () =>
-  setSelectedStoryIndex((i) => (i === null ? null : i === 0 ? storyData.length - 1 : i - 1))
-
-if (isLoading) {
   return (
-    <div className="w-full h-[600px] flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-500 mx-auto mb-2"></div>
-        <p className="text-gray-500 text-sm">뉴스를 불러오는 중...</p>
+    <div className="w-full h-[600px] overflow-y-auto scrollbar-hide">
+      <div className="space-y-3">
+        {newsData.map((news, index) => (
+          <Card
+            key={news.id}
+            className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow flex-shrink-0"
+            onClick={() => openStory(index)}
+          >
+            <div className="flex items-center p-3 border-b">
+              <Avatar className="w-8 h-8 mr-3">
+                <AvatarFallback>{news.source[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="font-semibold text-sm">{news.source}</p>
+                <p className="text-xs text-gray-500">{news.published_at}</p>
+              </div>
+              <Badge variant="outline" className="text-xs">
+                {news.category}
+              </Badge>
+            </div>
+
+            <div className="relative">
+              <Image
+                src={news.image_url || "/placeholder.svg?height=200&width=400&query=news%20image"}
+                alt={news.title}
+                width={400}
+                height={200}
+                className="w-full aspect-[2/1] object-cover"
+              />
+            </div>
+
+            <CardContent className="p-3">
+              <h3 className="font-bold text-sm mb-2 line-clamp-2">{news.title}</h3>
+              <p className="text-gray-600 text-xs mb-3 line-clamp-2">{news.summary}</p>
+
+              <div className="flex items-center justify-between">
+                <div className="flex space-x-4">
+                  <button className="flex items-center space-x-1 text-gray-500 hover:text-red-500">
+                    <Heart className="w-4 h-4" />
+                    <span className="text-xs">좋아요</span>
+                  </button>
+                  <button className="flex items-center space-x-1 text-gray-500 hover:text-teal-500">
+                    <Bell className="w-4 h-4" />
+                    <span className="text-xs">알림</span>
+                  </button>
+                </div>
+                <span className="text-xs text-gray-400">{news.read_time}</span>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      {/* 스토리 뷰어 */}
+      {selectedStoryIndex !== null && storyData.length > 0 && (
+        <StoryViewer
+          stories={storyData}
+          currentIndex={selectedStoryIndex}
+          onClose={closeStory}
+          onNext={nextStory}
+          onPrev={prevStory}
+        />
+      )}
     </div>
   )
-}
-
-return (
-  <div className="w-full h-[600px] overflow-y-auto scrollbar-hide">
-    <div className="space-y-3">
-      {newsData.map((news, index) => (
-        <Card
-          key={news.id}
-          className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow flex-shrink-0"
-          onClick={() => openStory(index)}
-        >
-          <div className="flex items-center p-3 border-b">
-            <Avatar className="w-8 h-8 mr-3">
-              <AvatarFallback>{news.source[0]}</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <p className="font-semibold text-sm">{news.source}</p>
-              <p className="text-xs text-gray-500">{news.published_at}</p>
-            </div>
-            <Badge variant="outline" className="text-xs">
-              {news.category}
-            </Badge>
-          </div>
-
-          <div className="relative">
-            <Image
-              src={news.image_url || "/placeholder.svg?height=200&width=400&query=news%20image"}
-              alt={news.title}
-              width={400}
-              height={200}
-              className="w-full aspect-[2/1] object-cover"
-            />
-          </div>
-
-          <CardContent className="p-3">
-            <h3 className="font-bold text-sm mb-2 line-clamp-2">{news.title}</h3>
-            <p className="text-gray-600 text-xs mb-3 line-clamp-2">{news.summary}</p>
-
-            <div className="flex items-center justify-between">
-              <div className="flex space-x-4">
-                <button className="flex items-center space-x-1 text-gray-500 hover:text-red-500">
-                  <Heart className="w-4 h-4" />
-                  <span className="text-xs">좋아요</span>
-                </button>
-                <button className="flex items-center space-x-1 text-gray-500 hover:text-teal-500">
-                  <Bell className="w-4 h-4" />
-                  <span className="text-xs">알림</span>
-                </button>
-              </div>
-              <span className="text-xs text-gray-400">{news.read_time}</span>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-
-    {/* 스토리 뷰어 */}
-    {selectedStoryIndex !== null && storyData.length > 0 && (
-      <StoryViewer
-        stories={storyData}
-        currentIndex={selectedStoryIndex}
-        onClose={closeStory}
-        onNext={nextStory}
-        onPrev={prevStory}
-      />
-    )}
-  </div>
-)
 }
 
 // 별점 평가 모달 컴포넌트
@@ -436,6 +477,11 @@ const handleSubmit = async (e: React.FormEvent) => {
       localStorage.setItem("hasRatedService", "true")
       setHasSubmitted(true)
       setTimeout(() => onClose(), 3000)
+
+      // 픽셀 이벤트 호출 (데모 모드)
+      if (typeof window !== "undefined" && typeof window.fbq === "function") {
+        window.fbq('track', 'SubmitApplication', { rating_type: selectedOption, feedback: feedback || null });
+      }
       return
     }
 
