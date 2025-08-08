@@ -88,7 +88,7 @@ const fallbackNews: NewsArticle[] = [
 // 뉴스 데이터 가져오기
 export async function getNewsArticles(): Promise<NewsArticle[]> {
   try {
-    // Supabase가 설정되지 않은 경우 폴백 데이터 반환
+    // Supabase가 설정되지 않은 경우 폴백 데이��� 반환
     if (!supabase) {
       console.log("Supabase not configured, using fallback news data")
       return fallbackNews
