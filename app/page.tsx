@@ -8,18 +8,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
-import { Clock, Bell, Smartphone, ArrowRight, X, Heart, Star } from 'lucide-react'
+import { Sparkles, Clock, Bell, ArrowRight, X, Heart, Star } from 'lucide-react'
 import Image from "next/image"
 import { supabase } from "@/lib/supabase"
 import { getNewsArticles, type NewsArticle } from "@/lib/news"
 import { getClientInfo, type ClientInfo } from "@/lib/client-info"
-
-// 필요한 import 추가
 import { getHeroContent, type HeroContent } from "@/lib/hero-content"
 import { trackUserInteraction, setupExitTracking } from "@/lib/user-tracking"
 import { getStoryContent, type StoryContent } from "@/lib/story-content"
-
-// 뉴스 데이터는 이제 동적으로 로드됩니다
 
 // 스토리 뷰어 컴포넌트
 function StoryViewer({
@@ -66,7 +62,7 @@ function StoryViewer({
         {/* 메인 콘텐츠 */}
         <div className="relative w-full h-full cursor-pointer" onClick={handleTap}>
           <Image
-            src={currentStory.image_url || "/placeholder.svg"}
+            src={currentStory.image_url || "/placeholder.svg?height=600&width=400&query=story%20image"}
             alt={currentStory.title}
             fill
             className="object-cover"
@@ -81,9 +77,7 @@ function StoryViewer({
               {currentStory.category}
             </Badge>
             <h2 className="text-2xl font-bold mb-2 leading-tight">{currentStory.title}</h2>
-            {currentStory.subtitle && (
-              <h3 className="text-lg font-medium mb-3 opacity-90">{currentStory.subtitle}</h3>
-            )}
+            {currentStory.subtitle && <h3 className="text-lg font-medium mb-3 opacity-90">{currentStory.subtitle}</h3>}
             <p className="text-sm mb-4 leading-relaxed opacity-90">{currentStory.content}</p>
           </div>
         </div>
@@ -130,7 +124,6 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
     try {
       // Check if Supabase is available
       if (!supabase) {
-        // Fallback behavior when Supabase is not configured
         console.log("Supabase not configured. Form data:", {
           email,
           interests: interests || null,
@@ -139,7 +132,6 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           referrer_source: clientInfo?.referrer_source || null,
         })
 
-        // Simulate API call delay
         await new Promise((resolve) => setTimeout(resolve, 1000))
 
         alert(
@@ -147,7 +139,6 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
         )
 
         onClose()
-        // 폼 초기화
         setEmail("")
         setInterests("")
         setExpectedFeatures([])
@@ -155,8 +146,7 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
         return
       }
 
-      // Supabase is available, proceed with database insertion
-      const { data, error } = await supabase.from("email_signups").insert([
+      const { error } = await supabase.from("email_signups").insert([
         {
           email,
           interests: interests || null,
@@ -167,8 +157,7 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
       ])
 
       if (error) {
-        if (error.code === "23505") {
-          // 중복 이메일 에러
+        if ((error as any).code === "23505") {
           alert("이미 등록된 이메일입니다.")
         } else {
           throw error
@@ -178,7 +167,6 @@ function EmailModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void 
           `알림 신청이 완료되었습니다!\n이메일: ${email}\n관심 주제: ${interests}\n기대 기능: ${expectedFeatures.join(", ")}`,
         )
         onClose()
-        // 폼 초기화
         setEmail("")
         setInterests("")
         setExpectedFeatures([])
@@ -324,10 +312,7 @@ function NewsFeed() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [articles, stories] = await Promise.all([
-          getNewsArticles(),
-          getStoryContent()
-        ])
+        const [articles, stories] = await Promise.all([getNewsArticles(), getStoryContent()])
         setNewsData(articles)
         setStoryData(stories)
       } catch (error) {
@@ -340,25 +325,11 @@ function NewsFeed() {
     loadData()
   }, [])
 
-  const openStory = (index: number) => {
-    setSelectedStoryIndex(index)
-  }
-
-  const closeStory = () => {
-    setSelectedStoryIndex(null)
-  }
-
-  const nextStory = () => {
-    if (selectedStoryIndex !== null) {
-      setSelectedStoryIndex((selectedStoryIndex + 1) % storyData.length)
-    }
-  }
-
-  const prevStory = () => {
-    if (selectedStoryIndex !== null) {
-      setSelectedStoryIndex(selectedStoryIndex === 0 ? storyData.length - 1 : selectedStoryIndex - 1)
-    }
-  }
+  const openStory = (index: number) => setSelectedStoryIndex(index)
+  const closeStory = () => setSelectedStoryIndex(null)
+  const nextStory = () => setSelectedStoryIndex((i) => (i === null ? null : (i + 1) % storyData.length))
+  const prevStory = () =>
+    setSelectedStoryIndex((i) => (i === null ? null : i === 0 ? storyData.length - 1 : i - 1))
 
   if (isLoading) {
     return (
@@ -373,7 +344,6 @@ function NewsFeed() {
 
   return (
     <div className="w-full h-[600px] overflow-y-auto scrollbar-hide">
-      {/* 기존 뉴스 카드들 */}
       <div className="space-y-3">
         {newsData.map((news, index) => (
           <Card
@@ -396,7 +366,7 @@ function NewsFeed() {
 
             <div className="relative">
               <Image
-                src={news.image_url || "/placeholder.svg"}
+                src={news.image_url || "/placeholder.svg?height=200&width=400&query=news%20image"}
                 alt={news.title}
                 width={400}
                 height={200}
@@ -426,7 +396,7 @@ function NewsFeed() {
         ))}
       </div>
 
-      {/* 스토리 뷰어 - 이제 별도의 스토리 데이터 사용 */}
+      {/* 스토리 뷰어 */}
       {selectedStoryIndex !== null && storyData.length > 0 && (
         <StoryViewer
           stories={storyData}
@@ -460,48 +430,27 @@ function ServiceRatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     setIsSubmitting(true)
 
     try {
-      // Check if Supabase is available
       if (!supabase) {
-        // Fallback behavior when Supabase is not configured
-        console.log("Supabase not configured. Form data:", {
-          rating_type: selectedOption,
-          feedback: feedback || null,
-        })
-
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-
+        console.log("Supabase not configured. Form data:", { rating_type: selectedOption, feedback: feedback || null })
+        await new Promise((r) => setTimeout(r, 1000))
         localStorage.setItem("hasRatedService", "true")
         setHasSubmitted(true)
-
-        // 3초 후 모달 닫기
-        setTimeout(() => {
-          onClose()
-        }, 3000)
+        setTimeout(() => onClose(), 3000)
         return
       }
 
-      // Supabase is available, proceed with database insertion
-      const { data, error } = await supabase.from("service_ratings").insert([
+      const { error } = await supabase.from("service_ratings").insert([
         {
           rating_type: selectedOption,
           feedback: feedback || null,
         },
       ])
-
-      if (error) {
-        throw error
-      } else {
-        localStorage.setItem("hasRatedService", "true")
-        setHasSubmitted(true)
-
-        // 3초 후 모달 닫기
-        setTimeout(() => {
-          onClose()
-        }, 3000)
-      }
-    } catch (error) {
-      console.error("Error:", error)
+      if (error) throw error
+      localStorage.setItem("hasRatedService", "true")
+      setHasSubmitted(true)
+      setTimeout(() => onClose(), 3000)
+    } catch (e) {
+      console.error(e)
       alert("평가 제출 중 오류가 발생했습니다. 다시 시도해주세요.")
     } finally {
       setIsSubmitting(false)
@@ -513,7 +462,6 @@ function ServiceRatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
     setFeedback("")
     setHasSubmitted(false)
   }
-
   const handleClose = () => {
     resetForm()
     onClose()
@@ -628,7 +576,7 @@ function ServiceRatingModal({ isOpen, onClose }: { isOpen: boolean; onClose: () 
   )
 }
 
-// LandingPage 컴포넌트 수정
+// LandingPage 컴포넌트
 export default function LandingPage() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false)
@@ -644,7 +592,6 @@ export default function LandingPage() {
       const content = await getHeroContent(variantKey || undefined)
       setHeroContent(content)
     }
-
     loadHeroContent()
   }, [])
 
@@ -696,8 +643,6 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* 네비게이션바 제거됨 */}
-
       {/* 히어로 섹션 */}
       <section className="py-20 bg-gradient-to-br from-teal-50 to-cyan-50">
         <div className="container mx-auto px-4 text-center">
@@ -708,10 +653,6 @@ export default function LandingPage() {
             <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-gray-800">
               {heroContent?.sub_title || "시점으로 해결하세요"}
             </h2>
-            <p className="text-xl text-gray-600 mb-8">
-              {heroContent?.description || "인스타그램처럼 빠르게 관심있는 뉴스만 소비하세요."}
-              <br />
-            </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Button
@@ -719,37 +660,73 @@ export default function LandingPage() {
                 onClick={() => setIsEmailModalOpen(true)}
                 className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
               >
-                <Bell className="w-5 h-5 mr-2" />앱 출시 알림 받기
+                <Bell className="w-5 h-5 mr-2" />
+                앱 출시 알림 받기
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center py-[0] px-[0]">
               <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
-                  <Clock className="w-6 h-6 text-teal-600" />
+                <div className="w-14 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
+                  <Clock className="w-7 h-6 text-teal-600" />
                 </div>
-                <h3 className="font-semibold mb-1">이게 무슨 이야기지?</h3>
-                <p className="text-gray-600 text-sm">어떤 기사를 봤는데, 무슨 논란인지 감이 안 왔던 적 있나요?</p>
-              </div>
-              <div className="flex flex-col items-center">
-                <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center mb-3">
-                  <Image src="/logo.svg" alt="시점" width={24} height={24} className="w-6 h-6" />
-                </div>
-                <h3 className="font-semibold mb-1">관심 없는 기사</h3>
+                <h3 className="font-semibold mb-1">원하는 주제만 팔로우</h3>
                 <p className="text-gray-600 text-sm">
-                  기사 수는 너무 많은데, 정작 내가 기다리던 이슈는 놓친 경험있나요?
+                  스포츠, 정치, 연예 등 거대한 카테고리부터 <br />{"'AI 트렌드', '해외축구 이적설'"}
+                  과 같은 세부 주제들을 팔로우해보세요
                 </p>
               </div>
               <div className="flex flex-col items-center">
                 <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
-                  <Bell className="w-6 h-6 text-emerald-600" />
+                  <Sparkles className="w-7 h-6 text-emerald-600" />
                 </div>
-                <h3 className="font-semibold mb-1">뒤늦은 발견</h3>
+                <h3 className="font-semibold mb-1">추천 뉴스 피드</h3>
                 <p className="text-gray-600 text-sm">
-                  까먹고 있다가, 이미 커진 논란이 된 후에야 뒤늦게 기사를 찾아본 적 있나요?
+                  {"'시점 AI'만의 기술력으로"} <br />
+                  당신이 궁금해할 만한 소식만 보여드려요
+                </p>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
+                  <Bell className="w-7 h-6 text-emerald-600" />
+                </div>
+                <h3 className="font-semibold mb-1">후속 기사 알림</h3>
+                <p className="text-gray-600 text-sm">
+                  후속 기사가 궁금한 사건이 있다면? <br/>{"'알림 설정'"}만 눌러주세요. <br />
+                  후속 기사 발행 시 5분 내로 보내드려요
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 기능 섹션 */}
+      <section id="features" className="py-20">
+        <div className="container mx-auto px-1">
+          <div className="text-center mb-20">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">왜 시점을 선택해야 할까요?</h2>
+          </div>
+
+          <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+            <Card className="p-6 hover:shadow-lg transition-shadow">
+              <h3 className="mb-2 font-semibold text-xl">
+                후속 기사가 궁금한 사건은 많지만, 74%의 사람들은 까먹고 지냅니다
+              </h3>
+              <p className="text-gray-600">
+                더 이상 “그 사건은 어떻게 됐지?” 하고 검색하지 않아도 됩니다. <br /><br />
+                사건의 시작부터 결말까지! 후속 보도를 빠르게 알림으로 전해드려요
+              </p>
+            </Card>
+
+            <Card className="p-6 hover:shadow-lg transition-shadow">
+              <h3 className="font-semibold text-lg mb-2">내게 필요한 기사만 보고 싶다면, 시점입니다</h3>
+              <p className="text-gray-600">
+                시점은 관심 없는 기사로 피드를 채우지 않습니다. <br />오직 당신이 팔로우한 주제와, 관심사 기반 뉴스만
+                보여드려요 <br /><br />
+                필요한 정보만 얻고, 시간은 절약하세요
+              </p>
+            </Card>
           </div>
         </div>
       </section>
@@ -781,43 +758,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 나머지 섹션들은 동일 */}
-      {/* 기능 섹션 */}
-      <section id="features" className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">왜 시점을 선택해야 할까요?</h2>
-            <p className="text-gray-600 text-lg">바쁜 직장인을 위한 특별한 기능들</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-teal-100 rounded-lg flex items-center justify-center mb-4">
-                <Smartphone className="w-6 h-6 text-teal-600" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">모바일 최적화</h3>
-              <p className="text-gray-600">출퇴근길, 점심시간에 언제든지 편리하게 뉴스를 확인하세요.</p>
-            </Card>
-
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center mb-4">
-                <Image src="/logo.svg" alt="시점" width={24} height={24} className="w-6 h-6" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">토픽 타임라인</h3>
-              <p className="text-gray-600">최근 떠오른 이슈가 왜 나왔는지 시간순으로 설명해드려요.</p>
-            </Card>
-
-            <Card className="p-6 hover:shadow-lg transition-shadow">
-              <div className="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center mb-4">
-                <Bell className="w-6 h-6 text-emerald-600" />
-              </div>
-              <h3 className="font-semibold text-lg mb-2">후속 기사 알림</h3>
-              <p className="text-gray-600">관심 있는 뉴스의 후속 기사가 나오면 자동으로 알려드려요.</p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
       {/* CTA 섹션 */}
       <section className="py-20 bg-gradient-to-r from-teal-500 to-cyan-500">
         <div className="container mx-auto px-4 text-center">
@@ -832,7 +772,8 @@ export default function LandingPage() {
                 onClick={() => setIsEmailModalOpen(true)}
                 className="bg-white text-teal-600 hover:bg-gray-100"
               >
-                <Bell className="w-5 h-5 mr-2" />앱 출시 알림 받기
+                <Bell className="w-5 h-5 mr-2" />
+                앱 출시 알림 받기
               </Button>
               <Button
                 size="lg"
@@ -847,9 +788,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 이메일 모달 추가 */}
+      {/* 이메일 모달 */}
       <EmailModal isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} />
-
       {/* 별점 평가 모달 */}
       <ServiceRatingModal isOpen={isRatingModalOpen} onClose={() => setIsRatingModalOpen(false)} />
     </div>
