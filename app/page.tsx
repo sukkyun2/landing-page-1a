@@ -117,6 +117,12 @@ const [clientInfo, setClientInfo] = useState<ClientInfo | null>(null)
 // 모달이 열릴 때 클라이언트 정보 수집
 useEffect(() => {
   if (isOpen && !clientInfo) {
+    if (typeof window !== "undefined" && typeof window.fbq === "function") {
+      window.fbq('trackCustom', `openModal`, {
+        modal_type: 'email_signup'
+      });
+    }
+
     getClientInfo().then(setClientInfo)
   }
 }, [isOpen, clientInfo])
