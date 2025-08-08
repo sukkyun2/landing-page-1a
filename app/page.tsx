@@ -703,7 +703,7 @@ export default function LandingPage() {
 
       {/* 기능 섹션 */}
       <section id="features" className="py-20">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-10">
           <div className="text-center mb-20">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">왜 시점을 선택해야 할까요?</h2>
           </div>
