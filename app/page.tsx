@@ -694,10 +694,10 @@ return (
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent md:text-4xl">
-            {heroContent?.main_title || "뉴스 읽을 시간이 부족하다면?"}
+            {heroContent?.main_title || "당신의 '시점'에서 세상을 봅니다"}
           </h1>
           <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-gray-800">
-            {heroContent?.sub_title || "시점으로 해결하세요"}
+            {heroContent?.sub_title || "당신만을 위한 뉴스 서비스, 시점"}
           </h2>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
