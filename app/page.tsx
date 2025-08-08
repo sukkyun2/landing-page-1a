@@ -16,6 +16,8 @@ import { getClientInfo, type ClientInfo } from "@/lib/client-info"
 import { getHeroContent, type HeroContent } from "@/lib/hero-content"
 import { trackUserInteraction, setupExitTracking } from "@/lib/user-tracking"
 import { getStoryContent, type StoryContent } from "@/lib/story-content"
+import HeroSection from "@/components/section/HeroSection";
+import FeaturesSection from "@/components/section/FeaturesSection";
 
 // 스토리 뷰어 컴포넌트
 function StoryViewer({
@@ -688,101 +690,19 @@ const handleDemoClick = () => {
 }
 
 return (
-  <div className="min-h-screen bg-white">
+  <div className="min-h-screen" style={{ backgroundColor: '#121A23' }}>
     {/* 히어로 섹션 */}
-    <section className="py-20 bg-gradient-to-br from-teal-50 to-cyan-50">
-      <div className="container mx-auto px-4 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-6 bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent md:text-4xl">
-            {heroContent?.main_title || "당신의 '시점'에서 세상을 봅니다"}
-          </h1>
-          <h2 className="text-2xl md:text-3xl font-semibold mb-4 text-gray-800">
-            {heroContent?.sub_title || "당신만을 위한 뉴스 서비스, 시점"}
-          </h2>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button
-              size="lg"
-              onClick={() => setIsEmailModalOpen(true)}
-              className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600"
-            >
-              <Bell className="w-5 h-5 mr-2" />
-              앱 출시 알림 받기
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center py-[0] px-[0]">
-            <div className="flex flex-col items-center">
-              <div className="w-14 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-3">
-                <Clock className="w-7 h-6 text-teal-600" />
-              </div>
-              <h3 className="font-semibold mb-1">원하는 주제만 팔로우</h3>
-              <p className="text-gray-600 text-sm">
-                스포츠, 정치, 연예 등 거대한 카테고리부터 <br />{"'AI 트렌드', '해외축구 이적설'"}
-                과 같은 세부 주제들을 팔로우해보세요
-              </p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
-                <Sparkles className="w-7 h-6 text-emerald-600" />
-              </div>
-              <h3 className="font-semibold mb-1">추천 뉴스 피드</h3>
-              <p className="text-gray-600 text-sm">
-                {"'시점 AI'만의 기술력으로"} <br />
-                당신이 궁금해할 만한 소식만 보여드려요
-              </p>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-3">
-                <Bell className="w-7 h-6 text-emerald-600" />
-              </div>
-              <h3 className="font-semibold mb-1">후속 기사 알림</h3>
-              <p className="text-gray-600 text-sm">
-                후속 기사가 궁금한 사건이 있다면? <br/>{"'알림 설정'"}만 눌러주세요. <br />
-                후속 기사 발행 시 5분 내로 보내드려요
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <HeroSection videoSrc={"hero.mp4"} />
 
     {/* 기능 섹션 */}
-    <section id="features" className="py-20">
-      <div className="mx-auto w-full md:w-2/3 px-6">
-        <div className="text-center mb-20">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">왜 시점을 선택해야 할까요?</h2>
-        </div>
-
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <h3 className="mb-2 font-semibold text-xl">
-              후속 기사가 궁금한 사건은 많지만, 74%의 사람들은 까먹고 지냅니다
-            </h3>
-            <p className="text-gray-600">
-              더 이상 “그 사건은 어떻게 됐지?” 하고 검색하지 않아도 됩니다. <br /><br />
-              사건의 시작부터 결말까지! 후속 보도를 빠르게 알림으로 전해드려요
-            </p>
-          </Card>
-
-          <Card className="p-6 hover:shadow-lg transition-shadow">
-            <h3 className="font-semibold text-lg mb-2">내게 필요한 기사만 보고 싶다면, 시점입니다</h3>
-            <p className="text-gray-600">
-              시점은 관심 없는 기사로 피드를 채우지 않습니다. <br />오직 당신이 팔로우한 주제와, 관심사 기반 뉴스만
-              보여드려요 <br /><br />
-              필요한 정보만 얻고, 시간은 절약하세요
-            </p>
-          </Card>
-        </div>
-      </div>
-    </section>
+    <FeaturesSection />
 
     {/* 데모 섹션 - 클릭 추적 추가 */}
-    <section id="demo" className="py-20 bg-gray-50" onClick={handleDemoClick}>
+    <section id="demo" className="py-20 " onClick={handleDemoClick}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">직접 체험해보세요</h2>
-          <p className="text-gray-600 text-lg">당신의 관심사를 중심으로 돌아가는 뉴스 서비스</p>
+          <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">직접 체험해보세요</h2>
+          <p className="text-gray-400 text-lg">당신의 관심사를 중심으로 돌아가는 뉴스 서비스</p>
         </div>
 
         <div className="max-w-sm mx-auto">
@@ -798,15 +718,30 @@ return (
           </div>
 
           <div className="text-center mt-6">
-            <p className="text-gray-500 text-sm">💡 뉴스 카드를 클릭하면 스토리 모드로 볼 수 있어요</p>
+            <p className="text-gray-200 text-sm px-4 py-2 rounded-lg" >
+              💡 뉴스 카드를 클릭하면 스토리 모드로 볼 수 있어요.
+            </p>
           </div>
         </div>
       </div>
     </section>
 
     {/* CTA 섹션 */}
-    <section className="py-20 bg-gradient-to-r from-teal-500 to-cyan-500">
-      <div className="container mx-auto px-4 text-center">
+    <section className="relative py-20 overflow-hidden">
+      {/* 배경 이미지 */}
+      <div className="absolute inset-0">
+        <Image
+          src="/cta.jpg"
+          alt="CTA Background"
+          fill
+          className="object-cover"
+        />
+        {/* 어두운 오버레이 */}
+        <div className="absolute inset-0 bg-black/50"></div>
+      </div>
+
+      {/* 콘텐츠 */}
+      <div className="relative container mx-auto px-4 text-center">
         <div className="max-w-2xl mx-auto text-white">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">지금 시작해보세요</h2>
           <p className="text-xl mb-8 opacity-90">바쁜 일상 속에서도 놓치지 않는 뉴스 소비의 새로운 경험</p>
@@ -816,7 +751,7 @@ return (
               size="lg"
               variant="secondary"
               onClick={() => setIsEmailModalOpen(true)}
-              className="bg-white text-teal-600 hover:bg-gray-100"
+              className="bg-white text-gray-900 hover:bg-gray-100"
             >
               <Bell className="w-5 h-5 mr-2" />
               앱 출시 알림 받기
@@ -824,7 +759,7 @@ return (
             <Button
               size="lg"
               variant="outline"
-              className="border-white text-white hover:bg-white hover:text-teal-600 bg-transparent"
+              className="border-white text-white hover:bg-white hover:text-gray-900 bg-transparent"
             >
               웹에서 시작하기
               <ArrowRight className="w-5 h-5 ml-2" />

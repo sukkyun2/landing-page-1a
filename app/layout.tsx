@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import Script from 'next/script'
+import Navbar from '@/components/Navbar'
 
 export const metadata: Metadata = {
   title: '시점',
@@ -61,6 +62,7 @@ export default function RootLayout({
           </Script>
       </head>
       <body>
+        <Navbar />
         {children}
         {/* Facebook NoScript fallback */}
         <noscript>
