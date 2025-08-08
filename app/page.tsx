@@ -690,7 +690,7 @@ const handleDemoClick = () => {
 }
 
 return (
-  <div className="min-h-screen" style={{ backgroundColor: '#121A23' }}>
+  <div className="min-h-screen bg-white">
     {/* 히어로 섹션 */}
     <HeroSection videoSrc={"hero.mp4"} />
 
@@ -698,11 +698,11 @@ return (
     <FeaturesSection />
 
     {/* 데모 섹션 - 클릭 추적 추가 */}
-    <section id="demo" className="py-20 " onClick={handleDemoClick}>
+    <section id="demo" className="py-20 bg-white" onClick={handleDemoClick}>
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">직접 체험해보세요</h2>
-          <p className="text-gray-400 text-lg">당신의 관심사를 중심으로 돌아가는 뉴스 서비스</p>
+          <h2 className="text-gray-900 text-3xl md:text-4xl font-bold mb-4">직접 체험해보세요</h2>
+          <p className="text-gray-600 text-lg">당신의 관심사를 중심으로 돌아가는 뉴스 서비스</p>
         </div>
 
         <div className="max-w-sm mx-auto">
@@ -718,7 +718,7 @@ return (
           </div>
 
           <div className="text-center mt-6">
-            <p className="text-gray-200 text-sm px-4 py-2 rounded-lg" >
+            <p className="text-gray-700 text-sm px-4 py-2 rounded-lg" >
               💡 뉴스 카드를 클릭하면 스토리 모드로 볼 수 있어요.
             </p>
           </div>
