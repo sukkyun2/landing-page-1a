@@ -19,32 +19,6 @@ import { getStoryContent, type StoryContent } from "@/lib/story-content"
 import HeroSection from "@/components/section/HeroSection";
 import FeaturesSection from "@/components/section/FeaturesSection";
 
-const sendDiscordWebhook = (dataObject: any) => {
-  const webhookUrl = "https://discord.com/api/webhooks/1403736894700785674/oMEBqeLdrUZYVAHhW8wTOiNj8Ym7MbRRIq3CyBPVXDjLDL76f1rY6_XhOUJzIbJmepJb";
-
-  const params = {
-    username: "알림봇",  // 웹훅 사용자 이름
-    avatar_url: "",     // (선택) 아이콘 URL
-    content: JSON.stringify(dataObject, null, 2) // 보낼 객체를 문자열로 변환
-  };
-
-  fetch(webhookUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params)
-  })
-      .then(response => {
-        if (response.ok) {
-          console.log("Webhook 전송 성공");
-        } else {
-          console.error("Webhook 전송 실패", response.statusText);
-        }
-      })
-      .catch(error => {
-        console.error("전송 중 에러 발생", error);
-      });
-}
-
 // 스토리 뷰어 컴포넌트
 function StoryViewer({
 stories,
@@ -62,8 +36,7 @@ onPrev: () => void
 const currentStory = stories[currentIndex]
 const progress = ((currentIndex + 1) / stories.length) * 100
 
-
-  const fireStoryPixel = (dir: 'prev'|'next') => {
+const fireStoryPixel = (dir: 'prev'|'next') => {
   if (typeof window !== "undefined" && typeof window.fbq === "function") {
     window.fbq('trackCustom', `tab_${dir}_${currentIndex}`, {
       content_type: 'story',
@@ -187,14 +160,6 @@ const handleSubmit = async (e: React.FormEvent) => {
           referrer_source: clientInfo?.referrer_source || null,
         })
       }
-
-      sendDiscordWebhook({
-        event: '사용자가 이메일을 입력!',
-        interests: interests || null,
-        expected_features: expectedFeatures,
-        ip_address: clientInfo?.ip_address || null,
-        referrer_source: clientInfo?.referrer_source || null,
-      })
 
       alert(
         `알림 신청이 완료되었습니다!`
@@ -514,8 +479,6 @@ const handleSubmit = async (e: React.FormEvent) => {
       localStorage.setItem("hasRatedService", "true")
       setHasSubmitted(true)
       setTimeout(() => onClose(), 3000)
-
-      sendDiscordWebhook({ event: "사용자가 피드백을 제출!", rating_type: selectedOption, feedback: feedback || null })
 
       // 픽셀 이벤트 호출 (데모 모드)
       if (typeof window !== "undefined" && typeof window.fbq === "function") {
