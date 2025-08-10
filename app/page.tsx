@@ -756,14 +756,14 @@ return (
               <Bell className="w-5 h-5 mr-2" />
               앱 출시 알림 받기
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-gray-900 bg-transparent"
-            >
-              웹에서 시작하기
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
+            {/*<Button*/}
+            {/*  size="lg"*/}
+            {/*  variant="outline"*/}
+            {/*  className="border-white text-white hover:bg-white hover:text-gray-900 bg-transparent"*/}
+            {/*>*/}
+            {/*  웹에서 시작하기*/}
+            {/*  <ArrowRight className="w-5 h-5 ml-2" />*/}
+            {/*</Button>*/}
           </div>
         </div>
       </div>
