@@ -628,6 +628,52 @@ return (
 )
 }
 
+// --- 약관/개인정보처리방침 모달 컴포넌트 ---
+function PolicyModal({
+  isOpen,
+  onClose,
+  type,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  type: "privacy" | "terms" | null
+}) {
+  if (!isOpen || !type) return null
+
+  const title = type === "privacy" ? "개인정보처리방침" : "이용약관"
+  const content =
+    type === "privacy"
+      ? (
+        <div className="text-sm text-gray-700 space-y-2 max-h-[60vh] overflow-y-auto">
+          <p>본 서비스는 앱 출시 알림 및 뉴스 서비스 제공을 위해 최소한의 개인정보(이메일 등)만을 수집합니다.</p>
+          <p>수집된 정보는 앱 출시 알림 및 서비스 개선 목적으로만 사용되며, 제3자에게 제공되지 않습니다.</p>
+          <p>이메일 수신자는 언제든지 구독을 취소할 수 있습니다.</p>
+          <p>기타 문의: swmredstone@gmail.com</p>
+        </div>
+      )
+      : (
+        <div className="text-sm text-gray-700 space-y-2 max-h-[60vh] overflow-y-auto">
+          <p>본 서비스는 비상업적 데모 서비스로, 제공되는 뉴스 및 정보의 정확성에 대해 보장하지 않습니다.</p>
+          <p>사용자는 본 서비스를 자유롭게 이용할 수 있으나, 무단 복제 및 상업적 이용은 금지됩니다.</p>
+          <p>서비스 이용 중 발생하는 문제에 대해 운영자는 법적 책임을 지지 않습니다.</p>
+        </div>
+      )
+
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl max-w-lg w-full p-6 relative">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold">{title}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        {content}
+      </div>
+    </div>
+  )
+}
+
 // LandingPage 컴포넌트
 export default function LandingPage() {
 const [isEmailModalOpen, setIsEmailModalOpen] = useState(false)
@@ -635,6 +681,7 @@ const [isRatingModalOpen, setIsRatingModalOpen] = useState(false)
 const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
 const [heroContent, setHeroContent] = useState<HeroContent | null>(null)
 const [hasTrackedDemo, setHasTrackedDemo] = useState(false)
+const [policyModal, setPolicyModal] = useState<null | "privacy" | "terms">(null)
 
 // 히어로 콘텐츠 로드
 useEffect(() => {
@@ -755,6 +802,37 @@ return (
     <EmailModal isOpen={isEmailModalOpen} onClose={() => setIsEmailModalOpen(false)} />
     {/* 별점 평가 모달 */}
     <ServiceRatingModal isOpen={isRatingModalOpen} onClose={() => setIsRatingModalOpen(false)} />
+
+    {/* 약관/개인정보처리방침 모달 */}
+    <PolicyModal
+      isOpen={policyModal !== null}
+      onClose={() => setPolicyModal(null)}
+      type={policyModal}
+    />
+
+    {/* --- 최하단 푸터 --- */}
+    <footer className="w-full py-8 bg-gray-50 border-t mt-12">
+      <div className="container mx-auto px-4 text-center text-xs text-gray-500 flex flex-col items-center gap-2">
+        <div className="space-x-4">
+          <button
+            className="underline hover:text-teal-600"
+            onClick={() => setPolicyModal("privacy")}
+            type="button"
+          >
+            개인정보처리방침
+          </button>
+          <span>|</span>
+          <button
+            className="underline hover:text-teal-600"
+            onClick={() => setPolicyModal("terms")}
+            type="button"
+          >
+            이용약관
+          </button>
+        </div>
+        <div className="mt-2">© {new Date().getFullYear()} Sijeom</div>
+      </div>
+    </footer>
   </div>
 )
 }
