@@ -218,13 +218,12 @@ return (
   <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
       <div className="p-6">
-        {/* 타이틀만 남김 */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center">
               <Bell className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-bold ">앱 출시 알림 신청</h2>
+            <h2 className="text-xl font-bold">앱 출시 알림 받기</h2>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <X className="w-6 h-6" />
@@ -336,7 +335,7 @@ return (
 }
 
 // 뉴스 피드 컴포넌트
-function NewsFeed({ onStoryClose }: { onStoryClose?: () => void }) {
+function NewsFeed() {
   const [selectedStoryIndex, setSelectedStoryIndex] = useState<number | null>(null)
   const [newsData, setNewsData] = useState<NewsArticle[]>([])
   const [storyData, setStoryData] = useState<StoryContent[]>([])
@@ -370,10 +369,7 @@ function NewsFeed({ onStoryClose }: { onStoryClose?: () => void }) {
     }
     setSelectedStoryIndex(index)
   }
-  const closeStory = () => {
-    setSelectedStoryIndex(null)
-    if (onStoryClose) onStoryClose()
-  }
+  const closeStory = () => setSelectedStoryIndex(null)
   const nextStory = () => setSelectedStoryIndex((i) => (i === null ? null : (i + 1) % storyData.length))
   const prevStory = () =>
     setSelectedStoryIndex((i) => (i === null ? null : i === 0 ? storyData.length - 1 : i - 1))
@@ -653,6 +649,38 @@ useEffect(() => {
   return cleanup
 }, [])
 
+// 스크롤 이벤트 처리
+useEffect(() => {
+  const handleScroll = () => {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+    const scrollHeight = document.documentElement.scrollHeight
+    const clientHeight = document.documentElement.clientHeight
+    const scrollPercentage = (scrollTop / (scrollHeight - clientHeight)) * 100
+
+    // 데모 섹션 추적 (한 번만)
+    const demoSection = document.getElementById("demo")
+    if (demoSection && !hasTrackedDemo) {
+      const rect = demoSection.getBoundingClientRect()
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        trackUserInteraction("demo_scroll")
+        setHasTrackedDemo(true)
+      }
+    }
+
+    // 페이지 하단 도달시 평가 모달
+    if (scrollPercentage >= 90 && !hasScrolledToBottom) {
+      const hasRated = localStorage.getItem("hasRatedService")
+      if (!hasRated) {
+        setIsRatingModalOpen(true)
+        setHasScrolledToBottom(true)
+      }
+    }
+  }
+
+  window.addEventListener("scroll", handleScroll)
+  return () => window.removeEventListener("scroll", handleScroll)
+}, [hasScrolledToBottom, hasTrackedDemo])
+
 // 데모 섹션 클릭 추적
 const handleDemoClick = () => {
   if (!hasTrackedDemo) {
@@ -661,20 +689,10 @@ const handleDemoClick = () => {
   }
 }
 
-// NewsFeed에서 스토리 닫힐 때 평가 모달 오픈 (한 번만)
-const handleNewsFeedStoryClose = () => {
-  const hasRated = localStorage.getItem("hasRatedService")
-  const hasOpenedRatingModal = localStorage.getItem("hasOpenedRatingModal")
-  if (!hasRated && !hasOpenedRatingModal) {
-    setIsRatingModalOpen(true)
-    localStorage.setItem("hasOpenedRatingModal", "true")
-  }
-}
-
 return (
   <div className="min-h-screen bg-white">
     {/* 히어로 섹션 */}
-    <HeroSection videoSrc={"hero.mp4"} onNotifyClick={undefined} />
+    <HeroSection videoSrc={"hero.mp4"} onNotifyClick={() => setIsEmailModalOpen(true)}/>
 
     {/* 기능 섹션 */}
     <FeaturesSection />
@@ -694,7 +712,7 @@ return (
                 <div className="w-16 h-1 bg-gray-600 rounded-full"></div>
               </div>
               <div className="p-4 h-full">
-                <NewsFeed onStoryClose={handleNewsFeedStoryClose} />
+                <NewsFeed />
               </div>
             </div>
           </div>
