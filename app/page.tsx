@@ -256,7 +256,7 @@ return (
               value={interests}
               onChange={(e) => setInterests(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none"
-              placeholder="예: 경제, AI 또는 케데헌 같은 좀 더 구체적인 주제도 좋아요"
+              placeholder="예: 기술, 경제, 스타트업, AI 등"
               rows={3}
             />
             <p className="text-xs text-gray-500 mt-1">관심있는 주제를 자유롭게 입력해주세요 (선택사항)</p>
